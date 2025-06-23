@@ -1,0 +1,25 @@
+name: Build and Deploy to Server
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Build Docker image
+      run: docker build -t finance-bot:latest --build-arg BUILD_CONFIGURATION=Release FinanceTelegramBot
+
+    - name: Stop and remove old container
+      run: |
+        docker stop finance-bot || true
+        docker rm finance-bot || true
+
+    - name: Run new container
+      run: |
+        docker run -d --name finance-bot -p 12345:8080 -e PG_CS="${{ secrets.PG_CS }}" -e TG_KEY="${{ secrets.TG_KEY }}" -e PROVERKA_CHEKA_API_KEY="${{ secrets.PROVERKA_CHEKA_API_KEY }}" finance-bot:latest
