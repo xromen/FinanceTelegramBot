@@ -23,7 +23,7 @@ public class CategoryTelegramService(
 
     public async Task SendCategoryList(TransactionType type, int page)
     {
-        string text = type == TransactionType.Income ? "📋 Категории доходов" : "📋 Категории расходов";
+        string text = type == TransactionType.Income ? "📋 Категории доходов" : "📋 Категории трат";
 
         var categories = await categoryService.GetAllCategoriesByUserIdAsync(env.UserId, type);
         var pagedCategories = categories.Skip(PageSize * (page - 1)).Take(PageSize);
@@ -61,9 +61,9 @@ public class CategoryTelegramService(
     {
         var text = "📒Группа категорий:";
         var keyboard = keyboardBuilder
-            .AppendCallbackData("➕ Доход", $"/Category/GetAll/{TransactionType.Income.ToString()}")
+            .AppendCallbackData("➕ Доходы", $"/Category/GetAll/{TransactionType.Income.ToString()}")
             .AppendLine()
-            .AppendCallbackData("➖ Расход", $"/Category/GetAll/{TransactionType.Expense.ToString()}")
+            .AppendCallbackData("➖ Траты", $"/Category/GetAll/{TransactionType.Expense.ToString()}")
             .AppendLine()
             .AppendBackButton().AppendToMainMenuButton();
 

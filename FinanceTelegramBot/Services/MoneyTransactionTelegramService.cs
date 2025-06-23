@@ -11,6 +11,7 @@ using FinanceTelegramBot.Base.Services;
 using FinanceTelegramBot.Data.Entities;
 using FinanceTelegramBot.Models;
 using FinanceTelegramBot.Models.ProverkaCheka;
+using System.Text;
 
 namespace FinanceTelegramBot.Services;
 
@@ -138,6 +139,14 @@ public class MoneyTransactionTelegramService(
             return;
         }
 
+        var checkExists = await transactionService.AnyAsync(c => c.CheckQrCodeRaw == dto.CheckQrCodeRaw);
+
+        if(checkExists)
+        {
+            await bot.SendMessage(env.UserId, "Данный чек уже добавлен");
+            return;
+        }
+
         var transaction = new MoneyTransaction()
         {
             Amount = dto.Amount,
@@ -149,7 +158,7 @@ public class MoneyTransactionTelegramService(
         };
 
         transaction = await transactionService.CreateAsync(transaction);
-        var description = GetDescription(transaction);
+        var description = await GetDescription(transaction);
 
         keyboardBuilder.AppendToMainMenuButton();
 
@@ -233,6 +242,90 @@ public class MoneyTransactionTelegramService(
         //    await OnSuccessfulCheckData(bot, message, userId, checkData, statusMessage, editMessage);
     }
 
+    public async Task SendCurrentBalance()
+    {
+        var today = DateTime.Now.Date;
+        var balance = await transactionService.GetMonthBalance(env.UserId, today.Year, today.Month);
+
+        var monthTransactions = await transactionService
+            .GetAllTransactionsByUserIdAsync(env.UserId, c => c.Date.Year == today.Year && c.Date.Month == today.Month);
+
+        var expenseAmount = monthTransactions.Where(c => c.Category.Type != TransactionType.Income).Select(c => c.Amount).Sum();
+        var incomeAmount = monthTransactions.Where(c => c.Category.Type == TransactionType.Income).Select(c => c.Amount).Sum();
+
+        var percent = incomeAmount == 0 ? 0 : (int)Math.Round(100 - (expenseAmount / incomeAmount * 100));
+        var greenSquareCount = (int)Math.Round(percent / 10.0);
+
+        var greenSquares = string.Concat(Enumerable.Repeat("🟩", greenSquareCount));
+        var whiteSquares = string.Concat(Enumerable.Repeat("⬜️", 10 - greenSquareCount));
+
+        var sign = balance > 0 ? "+" : "";
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.AppendLine($"🧮 <b><u>Баланс за {today:MMMM}</u></b>\n");
+        sb.AppendLine($"📈 <b>{sign}{balance.ToString("C0", new CultureInfo("ru-RU"))}</b>\n");
+        sb.AppendLine($"➕ {incomeAmount.ToString("C0", new CultureInfo("ru-RU"))}");
+        sb.AppendLine($"➖ {expenseAmount.ToString("C0", new CultureInfo("ru-RU"))}\n");
+        sb.AppendLine($"Остаток от дохода:");
+        sb.AppendLine($"{greenSquares}{whiteSquares}{percent}%");
+
+        keyboardBuilder.AppendCallbackData("🗂 Отчет по категориям", $"/Tr/ReportByCategory/{TransactionType.Expense}").AppendLine();
+        keyboardBuilder.AppendCallbackData("📊 Статистика", "/Tr/YearStatistics").AppendLine();
+        keyboardBuilder.AppendBackButton().AppendToMainMenuButton();
+
+        await bot.TryEditMessage(env.UserId, env.Update.CallbackQuery.Message, sb.ToString(), keyboardBuilder.Build(), ParseMode.Html);
+    }
+
+    public async Task ReportByCategory(TransactionType type, int page)
+    {
+        var today = DateTime.Now.Date;
+        var firstDay = new DateOnly(today.Year, today.Month, 1);
+        var lastDay = firstDay.AddMonths(1).AddDays(-1);
+
+        var text = $"""
+            🗂️ *Отчет по категориям
+            🗓️ за {firstDay:dd} - {lastDay:dd} {today:MMM} {today.Year}*
+            """;
+
+        var expenseSircle = type == TransactionType.Expense ? "🔴" : "⚪️";
+        var expenseData = type == TransactionType.Expense ? "/empty" : $"/tr/ReportByCategory/{TransactionType.Expense}/{page}";
+
+        var incomeSircle = type == TransactionType.Income ? "🟢" : "⚪️";
+        var incomeData = type == TransactionType.Income ? "/empty" : $"/tr/ReportByCategory/{TransactionType.Income}/{page}";
+
+        keyboardBuilder.AppendCallbackData($"{expenseSircle} Траты", expenseData);
+        keyboardBuilder.AppendCallbackData($"{incomeSircle} Доходы", incomeData);
+        keyboardBuilder.AppendLine();
+
+        var transactions = await transactionService
+            .GetAllTransactionsByUserIdAsync(env.UserId, c => c.Date.Year == today.Year && c.Date.Month == today.Month && c.Category.Type == type);
+
+        var grouppedTransactions = transactions
+            .OrderByDescending(x => x.Amount)
+            .GroupBy(c => c.Category.Name)
+            .Select(c => new 
+            {
+                CategoryName = c.Key,
+                Amount = c.Sum(cc => cc.Amount)
+            });
+
+        var paginatedCategories = grouppedTransactions.Skip(PageSize * (page - 1)).Take(PageSize);
+
+        foreach (var category in paginatedCategories)
+        {
+            keyboardBuilder.AppendCallbackData($"{category.CategoryName} : {category.Amount:C0}", "/empty").AppendLine();
+        }
+
+        var totalPages = (int)Math.Ceiling(grouppedTransactions.Count() / (double)PageSize);
+
+        keyboardBuilder.AppendPagination(page, totalPages, p => $"/tr/ReportByCategory/{type}/{p}");
+
+        keyboardBuilder.AppendBackButton().AppendToMainMenuButton();
+
+        await bot.TryEditMessage(env.UserId, env.Update.CallbackQuery.Message, text, keyboardBuilder.Build(), ParseMode.Markdown);
+    }
+
     private async Task<GetCheckResponse> TryGetCheckDataByPhoto(Stream stream, string fileName)
     {
         try
@@ -298,16 +391,21 @@ public class MoneyTransactionTelegramService(
         }
     }
 
-    private string GetDescription(MoneyTransaction transaction)
+    private async Task<string> GetDescription(MoneyTransaction transaction)
     {
         string sign = transaction.Category.Type == TransactionType.Expense || transaction.Category.Type == TransactionType.OurExpense ? "-" : "";
         string amount = sign + transaction.Amount.ToString("C", new CultureInfo("ru-RU"));
 
+        var today = DateTime.Now;
+
+        decimal balance = await transactionService.GetMonthBalance(transaction.UserId, today.Year, today.Month);
+
         return $"""
         ✅ Транзакция успешно добавлена:
-        💲 Сумма: *{amount}*
-        🗂 Категория: *{transaction.Category.Name}*
-        🗓️ Дата: *{transaction.Date:dd.MM.yyyy}*
+        *{amount}*
+        *{transaction.Category.Name}*
+        🗓️ *{transaction.Date:dd.MM.yyyy}*
+        📈 {balance:+#0.00;-#0.00;0.00}
         """;
     }
 }

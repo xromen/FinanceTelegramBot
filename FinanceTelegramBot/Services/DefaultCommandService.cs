@@ -17,6 +17,7 @@ public class DefaultCommandService(
 {
     public async Task SendMainMenu()
     {
+        keyboardBuilder.AppendCallbackData("🧮 Баланс", "/tr/getbalance").AppendLine();
         keyboardBuilder.AppendCallbackData("👨‍👩‍👦 Управление семьей", "/family/settings").AppendLine();
         keyboardBuilder.AppendCallbackData("🗂 Категории", "/category/getall").AppendLine();
         var markup = keyboardBuilder.Build();

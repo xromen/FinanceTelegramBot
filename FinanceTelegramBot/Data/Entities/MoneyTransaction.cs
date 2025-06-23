@@ -18,6 +18,7 @@ public class MoneyTransaction : BaseEntity
 
     [Required]
     public long UserId { get; set; }
+    public User User { get; set; } = null!;
 
     public string? CheckQrCodeRaw { get; set; }
 

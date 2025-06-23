@@ -51,12 +51,23 @@ public class CategoryService(ApplicationDbContext db, FamilyService familyServic
     public async Task<List<Category>> GetAllCategoriesByUserIdAsync(long userId, TransactionType? type = null)
     {
         var family = await familyService.GetFamilyByMemberId(userId);
-        var membersIds = family.Members.Select(c => c.Id);
+        IQueryable<Category> categories = db.Categories.Include(c => c.Keywords);
 
-        return await db.Categories
-            .Include(c => c.Keywords)
-            .Where(c => (c.UserId == userId || membersIds.Contains(c.UserId)) && (type == null || c.Type == type) )
+        if (family != null)
+        {
+            var membersIds = family.Members.Select(c => c.Id);
+
+            categories = categories.Where(c => c.UserId == userId || membersIds.Contains(c.UserId));
+        }
+        else
+        {
+            categories = categories.Where(c => c.UserId == userId);
+        }
+
+        return await categories
+            .Where(c => type == null || c.Type == type)
             .ToListAsync();
+
     }
 
     public async Task<Category?> GetCategoryByKeyword(long userId, string keyword)

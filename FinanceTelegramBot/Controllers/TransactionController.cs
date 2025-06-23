@@ -87,4 +87,16 @@ public class TransactionController(
 
         await transactionTelegramService.InitCreateByPhoto(keyword);
     }
+
+    [TelegramRoute("/tr/getbalance")]
+    public async Task GetBalance()
+    {
+        await transactionTelegramService.SendCurrentBalance();
+    }
+
+    [TelegramRoute("/tr/ReportByCategory/{type}/{page:null}")]
+    public async Task ReportByCategory(TransactionType type, int? page = 1)
+    {
+        await transactionTelegramService.ReportByCategory(type, page!.Value);
+    }
 }
