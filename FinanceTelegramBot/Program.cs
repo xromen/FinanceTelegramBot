@@ -6,6 +6,7 @@ using FinanceTelegramBot.Controllers;
 using FinanceTelegramBot.Data;
 using FinanceTelegramBot.Models;
 using FinanceTelegramBot.Services;
+using System.Globalization;
 
 namespace FinanceTelegramBot
 {
@@ -13,6 +14,9 @@ namespace FinanceTelegramBot
     {
         public static async Task Main(string[] args)
         {
+            CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("ru-RU");
+            CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("ru-RU");
+
             var apiKey = Environment.GetEnvironmentVariable("TG_KEY") ??
                          Environment.GetEnvironmentVariable("TG_KEY", EnvironmentVariableTarget.User) ??
                          throw new Exception("Не установлено значение ключа TG_KEY");
