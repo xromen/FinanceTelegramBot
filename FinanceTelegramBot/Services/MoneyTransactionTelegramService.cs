@@ -139,7 +139,7 @@ public class MoneyTransactionTelegramService(
             return;
         }
 
-        var checkExists = await transactionService.AnyAsync(c => c.CheckQrCodeRaw == dto.CheckQrCodeRaw);
+        var checkExists = await transactionService.AnyAsync(c => c.CheckQrCodeRaw == dto.CheckQrCodeRaw && dto.CheckQrCodeRaw != null);
 
         if(checkExists)
         {

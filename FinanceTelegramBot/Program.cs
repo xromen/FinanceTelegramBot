@@ -14,8 +14,9 @@ namespace FinanceTelegramBot
     {
         public static async Task Main(string[] args)
         {
-            CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("ru-RU");
-            CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("ru-RU");
+            var cultureInfo = new CultureInfo("ru-RU");
+            CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+            CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
             var apiKey = Environment.GetEnvironmentVariable("TG_KEY") ??
                          Environment.GetEnvironmentVariable("TG_KEY", EnvironmentVariableTarget.User) ??
