@@ -11,8 +11,8 @@ EXPOSE 8080
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["./FinanceTelegramBot/FinanceTelegramBot.csproj", "FinanceTelegramBot/"]
-COPY ["./FinanceTelegramBot.Base/FinanceTelegramBot.Base.csproj", "FinanceTelegramBot.Base/"]
+COPY ["FinanceTelegramBot/FinanceTelegramBot.csproj", "FinanceTelegramBot/"]
+COPY ["FinanceTelegramBot.Base/FinanceTelegramBot.Base.csproj", "FinanceTelegramBot.Base/"]
 RUN dotnet restore "./FinanceTelegramBot/FinanceTelegramBot.csproj"
 WORKDIR "/src/FinanceTelegramBot"
 COPY . .
