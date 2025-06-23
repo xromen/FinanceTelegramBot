@@ -14,8 +14,8 @@ WORKDIR /src
 COPY ["FinanceTelegramBot/FinanceTelegramBot.csproj", "FinanceTelegramBot/"]
 COPY ["FinanceTelegramBot.Base/FinanceTelegramBot.Base.csproj", "FinanceTelegramBot.Base/"]
 RUN dotnet restore "./FinanceTelegramBot/FinanceTelegramBot.csproj"
-WORKDIR "/src/FinanceTelegramBot"
 COPY . .
+WORKDIR "/src/FinanceTelegramBot"
 RUN dotnet build "./FinanceTelegramBot.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # Этот этап используется для публикации проекта службы, который будет скопирован на последний этап
