@@ -7,6 +7,7 @@ using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 using Telegram.Bot.Types;
 using Telegram.Bot;
+using System.Diagnostics;
 
 namespace FinanceTelegramBot.Base.Extensions;
 public static class FinanceTelegramBotClientExtensions
@@ -48,7 +49,7 @@ public static class FinanceTelegramBotClientExtensions
         {
             return await bot.EditMessageText(userId, message.Id, text, replyMarkup: keyboard, parseMode: parseMode);
         }
-        catch
+        catch (Exception e) 
         {
             return await bot.SendMessageWithKeyboard(userId, text, keyboard, parseMode: parseMode);
         }

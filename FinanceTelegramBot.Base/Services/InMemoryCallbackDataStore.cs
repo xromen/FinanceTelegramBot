@@ -5,7 +5,7 @@ using FinanceTelegramBot.Base.Models;
 namespace FinanceTelegramBot.Base.Services;
 public class InMemoryCallbackDataStore(IMemoryCache cache) : ICallbackDataStore
 {
-    public Dictionary<string, string> _store = new();
+    //public Dictionary<string, string> _store = new();
     public Task<string?> RetrieveDataAsync(string guid)
     {
         if(!cache.TryGetValue<string>(guid, out var data))

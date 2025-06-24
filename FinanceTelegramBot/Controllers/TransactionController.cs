@@ -94,9 +94,77 @@ public class TransactionController(
         await transactionTelegramService.SendCurrentBalance();
     }
 
-    [TelegramRoute("/tr/ReportByCategory/{type}/{page:null}")]
-    public async Task ReportByCategory(TransactionType type, int? page = 1)
+    [TelegramRoute("/tr/ReportByCategory/{type}/{year:null}/{month:null}/{page:null}")]
+    public async Task ReportByCategory(TransactionType type, int? year, int? month, int? page = 1)
     {
-        await transactionTelegramService.ReportByCategory(type, page!.Value);
+        await transactionTelegramService.ReportByCategory(type, year ?? DateTime.Now.Year, month ?? DateTime.Now.Month, page!.Value);
+    }
+
+    [TelegramRoute("/tr/AnnualStatistics")]
+    public async Task AnnualStatistics()
+    {
+        await transactionTelegramService.SendAnnualStatistics();
+    }
+
+    [TelegramRoute("/tr/getall/{type:null}/{year:null}/{month:null}/{page:null}")]
+    public async Task GetAll(TransactionType? type, int? year, int? month, int? page = 1)
+    {
+        await transactionTelegramService.SendAllByMonth(type, year ?? DateTime.Now.Year, month ?? DateTime.Now.Month, page.Value);
+    }
+
+    [TelegramRoute("/tr/ChooseMonth/{type:null}")]
+    public async Task ChooseMonth(TransactionType? type)
+    {
+        await transactionTelegramService.SendChooseMonth(type);
+    }
+
+    [TelegramRoute("/tr/Edit/{transactionId}")]
+    public async Task Edit(long transactionId)
+    {
+        await transactionTelegramService.EditTransaction(transactionId);
+    }
+
+    [TelegramRoute("/tr/amountedit/{transactionId}")]
+    public async Task<bool> AmountEdit(long transactionId)
+    {
+        await transactionTelegramService.EditAmount(transactionId);
+
+        return false;
+    }
+
+    [TelegramRoute("/tr/CategoryEdit/{transactionId}/{categoryId:null}/{page:null}")]
+    public async Task<bool> CategoryEdit(long transactionId, long? categoryId, int? page = 1)
+    {
+        await transactionTelegramService.EditCategory(transactionId, categoryId, page!.Value);
+
+        return false;
+    }
+
+    [TelegramRoute("/tr/dateedit/{transactionId}")]
+    public async Task<bool> DateEdit(long transactionId)
+    {
+        await transactionTelegramService.EditDate(transactionId);
+
+        return false;
+    }
+
+    [TelegramRoute("/tr/Delete/{transactionId}/{confirm:null}")]
+    public async Task<bool> Delete(long transactionId, bool? confirm)
+    {
+        await transactionTelegramService.Delete(transactionId, confirm);
+
+        return false;
+    }
+
+    [TelegramRoute("/tr/Export/{from:null}/{to:null}/{confirm:null}")]
+    public async Task Export(DateTime? from, DateTime? to, bool? confirm)
+    {
+        await transactionTelegramService.Export(from, to, confirm);
+    }
+
+    [TelegramRoute("/tr/ChooseDatesForExport")]
+    public async Task ChooseDatesForExport()
+    {
+        await transactionTelegramService.ChooseDatesForExport();
     }
 }

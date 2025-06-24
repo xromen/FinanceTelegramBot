@@ -29,4 +29,9 @@ public class NavigationService
             return stack.Peek();
         return null;
     }
+
+    public void Clear(long userId)
+    {
+        _userStacks.Remove(userId);
+    }
 }

@@ -49,7 +49,9 @@ public class DefaultController(
     }
 
     [TelegramRoute("/start")]
+    [TelegramRoute("/menu")]
     [TelegramCommand("/start", "Начало работы с ботом")]
+    [TelegramCommand("/menu", "Главное меню", 0)]
     public async Task Start()
     {
         var telegramUser = env.Update.CallbackQuery != null ? env.Update.CallbackQuery.From :

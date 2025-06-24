@@ -17,20 +17,25 @@ public class TelegramCommandRegistry
         var result = new List<BotCommand>();
         var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
+        List<TelegramCommandAttribute> attributes = new();
+
         foreach (var assembly in assemblies)
         {
             foreach (var type in assembly.GetTypes())
             {
                 foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static))
                 {
-                    var attribute = method.GetCustomAttribute<TelegramCommandAttribute>();
-                    if (attribute != null)
+                    var findedAttributes = method.GetCustomAttributes<TelegramCommandAttribute>();
+                    if (findedAttributes.Count() != 0)
                     {
-                        result.Add(new(attribute.Command.TrimStart('/'), attribute.Description));
+                        attributes.AddRange(findedAttributes);
                     }
                 }
             }
         }
+
+        foreach (var attribute in attributes.OrderBy(c => c.Order))
+            result.Add(new(attribute.Command.TrimStart('/'), attribute.Description));
 
         _commands = result;
 

@@ -7,6 +7,7 @@ using FinanceTelegramBot.Data;
 using FinanceTelegramBot.Models;
 using FinanceTelegramBot.Services;
 using System.Globalization;
+using OfficeOpenXml;
 
 namespace FinanceTelegramBot
 {
@@ -14,9 +15,9 @@ namespace FinanceTelegramBot
     {
         public static async Task Main(string[] args)
         {
-            var cultureInfo = new CultureInfo("ru-RU");
-            CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
-            CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+            ExcelPackage.License.SetNonCommercialPersonal("Maxim");
+
+            SetCultureInfo();
 
             var apiKey = Environment.GetEnvironmentVariable("TG_KEY") ??
                          Environment.GetEnvironmentVariable("TG_KEY", EnvironmentVariableTarget.User) ??
@@ -80,6 +81,25 @@ namespace FinanceTelegramBot
             //var store = scope.ServiceProvider.GetRequiredService<ICallbackDataStore>();
 
             app.Run();
+        }
+
+        private static void SetCultureInfo()
+        {
+            var cultureInfo = new CultureInfo("ru-RU");
+
+            cultureInfo = (CultureInfo)cultureInfo.Clone();
+            cultureInfo.DateTimeFormat.MonthNames =
+                cultureInfo.DateTimeFormat.MonthNames
+                    .Select(m => cultureInfo.TextInfo.ToTitleCase(m))
+                    .ToArray();
+
+            cultureInfo.DateTimeFormat.MonthGenitiveNames =
+                cultureInfo.DateTimeFormat.MonthGenitiveNames
+                    .Select(m => cultureInfo.TextInfo.ToTitleCase(m))
+                    .ToArray();
+
+            CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+            CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
         }
     }
 }

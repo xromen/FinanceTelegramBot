@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FinanceTelegramBot.Base.Models;
 
-[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
 public class TelegramRouteAttribute : Attribute
 {
     public string Template { get; }

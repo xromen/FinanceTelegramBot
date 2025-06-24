@@ -52,20 +52,28 @@ public class TelegramRouter
 
             foreach (var method in controllerType.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly))
             {
-                var actionAttribute = method.GetCustomAttribute<TelegramRouteAttribute>();
-                string actionTemplate = string.Empty;
-                
-                if(actionAttribute != null)
+                var actionAttributes = method.GetCustomAttributes<TelegramRouteAttribute>();
+                foreach(var actionAttribute in actionAttributes)
                 {
-                    actionTemplate = actionAttribute.Template;
-                }
-                else if(!controllerTemplate.Contains("[action]", StringComparison.OrdinalIgnoreCase))
-                {
-                    actionTemplate = method.Name;
+                    string actionTemplate = actionAttribute.Template;
+
+                    _routes.Add(ParseRoute(GetTemplate(controllerTemplate, actionTemplate), controllerType, method));
                 }
 
-                _routes.Add(ParseRoute(GetTemplate(controllerTemplate, actionTemplate), controllerType, method));
+                if (actionAttributes.Count() == 0)
+                {
+                    string actionTemplate = string.Empty;
+                    if(!controllerTemplate.Contains("[action]", StringComparison.OrdinalIgnoreCase))
+                    {
+                        actionTemplate = method.Name;
+                    }
+
+                    _routes.Add(ParseRoute(GetTemplate(controllerTemplate, actionTemplate), controllerType, method));
+                }
+
             }
+
+            
         }
     }
 
@@ -173,8 +181,8 @@ public class TelegramRouter
 
         //    return $@"\s+{regexBody}";
         //});
-        var pattern = Regex.Replace(template, @"/\{(\w+):null\}", @"(?:/(?<$1>[^/]+))?");
-        pattern = Regex.Replace(pattern, @"\{(\w+)\}", @"(?<$1>[^/]+)");
+        var pattern = Regex.Replace(template, @"/\{(\w+):null\}", @"(?:/(?<$1>[^/]*))?");
+        pattern = Regex.Replace(pattern, @"\{(\w+)\}", @"(?<$1>[^/]*)");
 
         pattern = "^" + pattern;
 
@@ -287,6 +295,9 @@ public class TelegramRouter
 
         if (actualType.IsEnum)
         {
+            if (string.IsNullOrEmpty(input))
+                return null;
+
             if (Enum.TryParse(actualType, input, ignoreCase: true, out var enumValue))
                 return enumValue;
 

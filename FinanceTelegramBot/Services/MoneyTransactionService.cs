@@ -50,6 +50,24 @@ public class MoneyTransactionService(ApplicationDbContext db, FamilyService fami
         return await transactions.ToListAsync();
     }
 
+    public async Task<List<DateOnly>> GetTransactionsDate(long userId)
+    {
+        var family = await familyService.GetFamilyByMemberId(userId);
+
+        List<DateOnly> dates = new();
+
+        if (family != null)
+        {
+            var memberIds = family.Members.Select(c => c.Id);
+
+            return await db.MoneyTransactions.Where(c => c.UserId == userId || memberIds.Contains(c.UserId)).Select(c => c.Date).ToListAsync();
+        }
+        else
+        {
+            return await db.MoneyTransactions.Where(c => c.UserId == userId).Select(c => c.Date).ToListAsync();
+        }
+    }
+
     public async Task<decimal> GetMonthBalance(long userId, int year, int month)
     {
         var transactions = await GetAllTransactionsByUserIdAsync(userId, c => c.Date.Year == year && c.Date.Month == month);
@@ -58,14 +76,14 @@ public class MoneyTransactionService(ApplicationDbContext db, FamilyService fami
         return amounts.Sum();
     }
 
-    public async Task<MoneyTransaction> UpdateCategoryAsync(MoneyTransaction transaction)
+    public async Task<MoneyTransaction> UpdateAsync(MoneyTransaction transaction)
     {
         db.MoneyTransactions.Update(transaction);
         await db.SaveChangesAsync();
         return transaction;
     }
 
-    public async Task<bool> DeleteCategoryAsync(long id)
+    public async Task<bool> DeleteTransactionAsyns(long id)
     {
         var transaction = await GetByIdAsync(id);
         if (transaction == null) throw new BusinessException("Транзакция не найдена");

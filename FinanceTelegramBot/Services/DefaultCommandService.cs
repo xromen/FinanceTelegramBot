@@ -12,12 +12,15 @@ public class DefaultCommandService(
     ITelegramBotClient bot, 
     InlineKeyboardBuilder keyboardBuilder, 
     RouteEnvironment env,
-    TelegramCommandRegistry commandRegistry
+    TelegramCommandRegistry commandRegistry,
+    NavigationService navigationService
     )
 {
     public async Task SendMainMenu()
     {
         keyboardBuilder.AppendCallbackData("🧮 Баланс", "/tr/getbalance").AppendLine();
+        keyboardBuilder.AppendCallbackData("📊 Статистика", "/tr/AnnualStatistics").AppendLine();
+        keyboardBuilder.AppendCallbackData("🧾 Операции", "/tr/getall").AppendLine();
         keyboardBuilder.AppendCallbackData("👨‍👩‍👦 Управление семьей", "/family/settings").AppendLine();
         keyboardBuilder.AppendCallbackData("🗂 Категории", "/category/getall").AppendLine();
         var markup = keyboardBuilder.Build();
@@ -32,13 +35,16 @@ public class DefaultCommandService(
             Если ключевое слово или категория зп существует, то транзакция добавится автоматически, если нет то будет предложено создать новую или выбрать существующую._
             """;
 
+        //Очищаем историю переходов, так как из главного меню назад нет кнопки
+        navigationService.Clear(env.UserId);
+
         if (env.Update!.Type == UpdateType.CallbackQuery)
         {
             await bot.EditMessageText(env.UserId, env.Update.CallbackQuery.Message.Id, text, ParseMode.Markdown, replyMarkup: markup);
             return;
         }
 
-        await bot.SendMessageWithKeyboard(env.UserId, text, markup, ParseMode.Markdown);
+        await bot.TryEditMessage(env.UserId, env.Update.CallbackQuery?.Message, text, markup, ParseMode.Markdown);
     }
 
     public async Task SendCommandList()
