@@ -289,7 +289,7 @@ public class MoneyTransactionTelegramService(
         var today = DateTime.Now.Date;
 
         var transactions = await transactionService.GetAllTransactionsByUserIdAsync(env.UserId, c => c.Date.Year == today.Year);
-        var grouppedByMonth = transactions.GroupBy(c => c.Date.Month);
+        var grouppedByMonth = transactions.GroupBy(c => c.Date.Month).OrderByDescending(g => g.Key);
 
         StringBuilder sb = new StringBuilder();
 
@@ -341,13 +341,13 @@ public class MoneyTransactionTelegramService(
             .GetAllTransactionsByUserIdAsync(env.UserId, c => c.Date.Year == date.Year && c.Date.Month == date.Month && c.Category.Type == type);
 
         var grouppedTransactions = transactions
-            .OrderByDescending(x => x.Amount)
             .GroupBy(c => c.Category.Name)
             .Select(c => new
             {
                 CategoryName = c.Key,
                 Amount = c.Sum(cc => cc.Amount)
-            });
+            })
+            .OrderByDescending(x => x.Amount);
 
         var paginatedCategories = grouppedTransactions.Skip(PageSize * (page - 1)).Take(PageSize);
 
@@ -381,13 +381,24 @@ public class MoneyTransactionTelegramService(
         keyboardBuilder.AppendCallbackData($"{incomeCircle} Доходы", $"/tr/getall/{TransactionType.Income}/{year}/{month}");
         keyboardBuilder.AppendLine();
 
-        var paginatedTransactions = transactions.OrderByDescending(c => c.Date).Skip(PageSize * (page - 1)).Take(PageSize);
+        var paginatedTransactions = transactions
+            .OrderByDescending(c => c.Date)
+            .ThenByDescending(c => c.Id)
+            .Skip(PageSize * (page - 1))
+            .Take(PageSize);
 
         foreach (MoneyTransaction transaction in paginatedTransactions)
         {
             var sign = transaction.Category.Type == TransactionType.Income ? "+" : "-";
+            string label = $"{sign}{transaction.Amount:C0} {transaction.Category.Name} 🗓 {transaction.Date.Day}";
 
-            keyboardBuilder.AppendCallbackData($"{sign}{transaction.Amount:C0} {transaction.Category.Name} 🗓 {transaction.Date.Day}", $"/tr/edit/{transaction.Id}")
+            if (transaction.Items.Any())
+            {
+                label = "🧾 " + label;
+            }
+            
+            keyboardBuilder
+                .AppendCallbackData(label, $"/tr/edit/{transaction.Id}")
                 .AppendLine();
         }
 
@@ -405,9 +416,13 @@ public class MoneyTransactionTelegramService(
     public async Task SendChooseMonth(TransactionType? type)
     {
         var dates = await transactionService.GetTransactionsDate(env.UserId);
-        var monthes = dates.Select(c => new { c.Month, c.Year, Str = c.ToString("MMMM yyyy") }).DistinctBy(c => c.Str);
+        var months = dates
+            .Select(c => new { c.Month, c.Year, Str = c.ToString("MMMM yyyy") })
+            .DistinctBy(c => c.Str)
+            .OrderBy(c => c.Year)
+            .ThenBy(c => c.Month);
 
-        foreach (var month in monthes)
+        foreach (var month in months)
         {
             keyboardBuilder.AppendCallbackData(month.Str, $"/tr/getall/{type}/{month.Year}/{month.Month}/1").AppendLine();
         }
@@ -419,12 +434,20 @@ public class MoneyTransactionTelegramService(
 
     public async Task EditTransaction(long transactionId)
     {
-        var text = """
-            👀 Дитэйлс
-            (для правки, нажми на то, что нужно изменить)
-            """;
+        var textBuilder = new StringBuilder("👀 Дитэйлс\n(для правки, нажми на то, что нужно изменить)\n\n");
 
         var transaction = await transactionService.GetByIdAsync(transactionId);
+
+        if (transaction.Items.Any())
+        {
+            textBuilder.AppendLine("🧾 Данные чека: ");
+        }
+        
+        foreach (var purchaseItem in transaction.Items)
+        {
+            var amount = purchaseItem.Quantity * purchaseItem.Price;
+            textBuilder.AppendLine($"{purchaseItem.Name} {purchaseItem.Quantity} X {purchaseItem.Price:C} = {amount:C}");
+        }
 
         keyboardBuilder.AppendCallbackData(transaction!.Amount.ToString("C0"), $"/tr/amountedit/{transactionId}").AppendLine();
         keyboardBuilder.AppendCallbackData(transaction.Category.Name, $"/tr/categoryedit/{transactionId}").AppendLine();
@@ -432,7 +455,7 @@ public class MoneyTransactionTelegramService(
         keyboardBuilder.AppendCallbackData("🗑 Удалить", $"/tr/delete/{transactionId}").AppendLine();
         keyboardBuilder.AppendBackButton().AppendToMainMenuButton();
 
-        await bot.TryEditMessage(env.UserId, env.Update.CallbackQuery?.Message, text, keyboardBuilder.Build());
+        await bot.TryEditMessage(env.UserId, env.Update.CallbackQuery?.Message, textBuilder.ToString(), keyboardBuilder.Build());
     }
 
     public async Task EditAmount(long transactionId)

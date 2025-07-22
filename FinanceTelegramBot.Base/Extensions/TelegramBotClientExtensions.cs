@@ -25,7 +25,7 @@ public static class FinanceTelegramBotClientExtensions
             if (currKeyboardMessage.ContainsKey(userId))
             {
                 var oldMessage = currKeyboardMessage[userId];
-                await client.DeleteMessage(userId, oldMessage.Id);
+                await client.EditMessageReplyMarkup(userId, oldMessage.Id);
             }
         }
         catch
