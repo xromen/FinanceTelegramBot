@@ -446,7 +446,7 @@ public class MoneyTransactionTelegramService(
         foreach (var purchaseItem in transaction.Items)
         {
             var amount = purchaseItem.Quantity * purchaseItem.Price;
-            textBuilder.AppendLine($"{purchaseItem.Name} {purchaseItem.Quantity} X {purchaseItem.Price:C} = {amount:C}");
+            textBuilder.AppendLine($"{purchaseItem.Name} {purchaseItem.Quantity} X {purchaseItem.Price:C0} = {amount:C0}\n");
         }
 
         keyboardBuilder.AppendCallbackData(transaction!.Amount.ToString("C0"), $"/tr/amountedit/{transactionId}").AppendLine();
