@@ -54,12 +54,22 @@ public class KeywordService(ApplicationDbContext db, FamilyService familyService
     public async Task<List<CategoryKeyword>> GetAllByUserIdAsync(long userId)
     {
         var family = await familyService.GetFamilyByMemberId(userId);
-        var membersIds = family.Members.Select(c => c.Id);
+        if (family != null)
+        {
+            var membersIds = family.Members.Select(c => c.Id);
 
-        return await db.CategoryKeywords
-            .Include(c => c.Category)
-            .Where(c => c.Category.UserId == userId || membersIds.Contains(c.Category.UserId))
-            .ToListAsync();
+            return await db.CategoryKeywords
+                .Include(c => c.Category)
+                .Where(c => c.Category.UserId == userId || membersIds.Contains(c.Category.UserId))
+                .ToListAsync();
+        }
+        else
+        {
+            return await db.CategoryKeywords
+                .Include(c => c.Category)
+                .Where(c => c.Category.UserId == userId)
+                .ToListAsync();
+        }
     }
 
     public async Task<CategoryKeyword> UpdateCategoryAsync(CategoryKeyword keyword)
