@@ -1,25 +1,27 @@
 name: Build and Deploy to Server
-
 on:
   push:
     branches: [ master ]
-
 jobs:
   build-and-deploy:
     runs-on: self-hosted
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    - name: Create .env file
+      run: |
+        cat > .env << EOF
+        PG_CS=${{ secrets.PG_CS }}
+        TG_KEY=${{ secrets.TG_KEY }}
+        PROVERKA_CHEKA_API_KEY=${{ secrets.PROVERKA_CHEKA_API_KEY }}
+        EOF
+
     - name: Build Docker image
-      run: docker build -f FinanceTelegramBot/Dockerfile -t finance-bot:latest --build-arg BUILD_CONFIGURATION=Release .
+      run: docker compose build
 
-    - name: Stop and remove old container
-      run: |
-        docker stop finance-bot || true
-        docker rm finance-bot || true
+    - name: Stop old containers
+      run: docker compose down || true
 
-    - name: Run new container
-      run: |
-        docker run -d --name finance-bot -p 12345:8080 -e PG_CS="${{ secrets.PG_CS }}" -e TG_KEY="${{ secrets.TG_KEY }}" -e PROVERKA_CHEKA_API_KEY="${{ secrets.PROVERKA_CHEKA_API_KEY }}" finance-bot:latest
+    - name: Start containers
+      run: docker compose up -d

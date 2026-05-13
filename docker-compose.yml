@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_DB: finance
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: FinanceTelegramBot/Dockerfile
+      args:
+        BUILD_CONFIGURATION: Release
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "12345:8080"
+    environment:
+      - TG_KEY=${TG_KEY}
+      - PROVERKA_CHEKA_API_KEY=${PROVERKA_CHEKA_API_KEY}
+      - PG_CS=Host=db;Port=5432;Database=finance;Username=postgres;Password=postgres;
+
+volumes:
+  postgres_data:

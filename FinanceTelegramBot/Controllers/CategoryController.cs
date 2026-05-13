@@ -1,13 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc.RazorPages;
-using Telegram.Bot;
-using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
-using FinanceTelegramBot.Base;
-using FinanceTelegramBot.Base.Models;
-using FinanceTelegramBot.Data.Entities;
+﻿using FinanceTelegramBot.Base.Models;
 using FinanceTelegramBot.Models;
 using FinanceTelegramBot.Services;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace FinanceTelegramBot.Controllers;
 
