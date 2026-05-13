@@ -19,13 +19,15 @@ namespace FinanceTelegramBot
 
             SetCultureInfo();
 
-            var apiKey = Environment.GetEnvironmentVariable("TG_KEY") ??
-                         Environment.GetEnvironmentVariable("TG_KEY", EnvironmentVariableTarget.User) ??
-                         throw new Exception("Не установлено значение ключа TG_KEY");
+            var apiKey = "";
+            //Environment.GetEnvironmentVariable("TG_KEY") ??
+            //         Environment.GetEnvironmentVariable("TG_KEY", EnvironmentVariableTarget.User) ??
+            //         throw new Exception("Не установлено значение ключа TG_KEY");
 
-            var pgCs = Environment.GetEnvironmentVariable("PG_CS") ??
-                       Environment.GetEnvironmentVariable("PG_CS", EnvironmentVariableTarget.User) ??
-                       throw new Exception("Не установлено значение ключа PG_CS");
+            var pgCs = "";
+                //Environment.GetEnvironmentVariable("PG_CS") ??
+                //       Environment.GetEnvironmentVariable("PG_CS", EnvironmentVariableTarget.User) ??
+                //       throw new Exception("Не установлено значение ключа PG_CS");
 
             var builder = WebApplication.CreateBuilder(args);
 
