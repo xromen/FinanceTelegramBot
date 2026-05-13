@@ -23,14 +23,14 @@ namespace FinanceTelegramBot
                          Environment.GetEnvironmentVariable("TG_KEY", EnvironmentVariableTarget.User) ??
                          throw new Exception("Не установлено значение ключа TG_KEY");
 
-            //var pgCs = Environment.GetEnvironmentVariable("PG_CS") ??
-            //           Environment.GetEnvironmentVariable("PG_CS", EnvironmentVariableTarget.User) ??
-            //           throw new Exception("Не установлено значение ключа PG_CS");
+            var pgCs = Environment.GetEnvironmentVariable("PG_CS") ??
+                       Environment.GetEnvironmentVariable("PG_CS", EnvironmentVariableTarget.User) ??
+                       throw new Exception("Не установлено значение ключа PG_CS");
 
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddPooledDbContextFactory<ApplicationDbContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("default"))
+                options.UseNpgsql(pgCs)
             .UseSnakeCaseNamingConvention());
 
             builder.Services.AddScoped(provider => provider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>().CreateDbContext());
